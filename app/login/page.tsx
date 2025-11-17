@@ -6,9 +6,12 @@ export default function LoginPage() {
         <p className="text-gray-400 mb-6">Sign in to your intelligent workflow OS</p>
         
         <div className="space-y-4">
-          <button className="w-full bg-aura-azure text-aura-black py-3 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all">
+          <a 
+            href="/dashboard"
+            className="block w-full bg-aura-azure text-aura-black py-3 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all text-center"
+          >
             🚀 Get Started with AURA
-          </button>
+          </a>
           
           <div className="text-center text-gray-400 text-sm">or connect existing account</div>
           

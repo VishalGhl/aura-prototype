@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { storeLinearToken } from '@/lib/storage';  // ← ADD THIS IMPORT
+import { storeLinearToken } from '@/lib/storage';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -40,12 +40,12 @@ export async function GET(request: Request) {
       throw new Error(tokenData.error_description || 'Token exchange failed');
     }
 
-    // ✅ STORE THE ACCESS TOKEN - ADD THIS LINE
+    // Store the access token
     storeLinearToken(tokenData.access_token);
 
-    // Success! Redirect to main app with token
+    // ✅ FIXED: Redirect to DASHBOARD not home page
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/?linear_connected=true`
+      `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard?linear_connected=true`
     );
 
   } catch (error) {
