@@ -1,6 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
+import ReCAPTCHA from 'react-google-recaptcha'
+import { hashPassword } from '../lib/auth-utils'
+import { createUser } from '../lib/db'
+import { sendWelcomeEmail } from '../utils/emailService'
+import { verifyCaptcha } from '../utils/captcha'
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -13,6 +18,9 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showSuccess, setShowSuccess] = useState(false)
   const [countdown, setCountdown] = useState(60)
+  const [captchaToken, setCaptchaToken] = useState<string>('')
+  const [captchaError, setCaptchaError] = useState<string>('')
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -78,22 +86,52 @@ export default function SignupPage() {
       return
     }
 
-    setIsLoading(true)
+    // Verify CAPTCHA
+    if (!captchaToken) {
+      setErrors({ captcha: 'Please complete the security verification' });
+      return;
+    }
+
+    // Verify CAPTCHA with server
+    setIsLoading(true);
+    try {
+      const isCaptchaValid = await verifyCaptcha(captchaToken);
+      if (!isCaptchaValid) {
+        setErrors({ captcha: 'Security verification failed. Please try again.' });
+        setIsLoading(false);
+        recaptchaRef.current?.reset();
+        setCaptchaToken('');
+        return;
+      }
+    } catch (error) {
+      setErrors({ captcha: 'CAPTCHA verification error. Please try again.' });
+      setIsLoading(false);
+      recaptchaRef.current?.reset();
+      setCaptchaToken('');
+      return;
+    }
 
     try {
       // Generate unique password for the user
       const userPassword = generateUniquePassword()
       
-      // Simulate API call to create account and send email
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Hash password for storage
+      const hashedPassword = await hashPassword(userPassword)
       
-      // In a real app, you would send this data to your backend
-      console.log('Account created:', {
+      // Create user in database
+      const user = await createUser({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        generatedPassword: userPassword
-      })
+        password: hashedPassword,
+      });
+
+      // Send welcome email with actual password (not hashed)
+      await sendWelcomeEmail({
+        firstName: formData.firstName,
+        email: formData.email,
+        password: userPassword,
+      });
 
       // Show success modal
       setShowSuccess(true)
@@ -108,9 +146,12 @@ export default function SignupPage() {
         }
       }, 1000)
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error)
-      setErrors({ submit: 'Failed to create account. Please try again.' })
+      setErrors({ submit: error.message || 'Failed to create account. Please try again.' })
+      // Reset CAPTCHA on error
+      recaptchaRef.current?.reset();
+      setCaptchaToken('');
     } finally {
       setIsLoading(false)
     }
@@ -119,8 +160,13 @@ export default function SignupPage() {
   const handleResendEmail = async () => {
     setIsLoading(true)
     try {
-      // Simulate resending email
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Resend welcome email
+      await sendWelcomeEmail({
+        firstName: formData.firstName,
+        email: formData.email,
+        password: 'your-password' // In real app, you'd retrieve this from the database
+      });
+      
       setCountdown(60)
       
       // Restart countdown
@@ -132,6 +178,8 @@ export default function SignupPage() {
           clearInterval(countdownInterval)
         }
       }, 1000)
+    } catch (error: any) {
+      setErrors({ submit: error.message || 'Failed to resend email' })
     } finally {
       setIsLoading(false)
     }
@@ -142,6 +190,12 @@ export default function SignupPage() {
     // Clear field error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
+    }
+    if (errors.submit) {
+      setErrors(prev => ({ ...prev, submit: '' }))
+    }
+    if (errors.captcha) {
+      setErrors(prev => ({ ...prev, captcha: '' }))
     }
   }
 
@@ -271,12 +325,33 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {/* CAPTCHA PLACEHOLDER */}
+          {/* CAPTCHA COMPONENT */}
           <div className="bg-aura-black border border-aura-azure/20 rounded-lg p-4 text-center">
             <div className="text-gray-400 mb-2">🔒 Security Verification</div>
-            <div className="bg-aura-azure/20 border border-aura-azure/30 rounded p-8 cursor-not-allowed">
-              <div className="text-aura-azure">Drag puzzle pieces to verify</div>
-            </div>
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY!}
+              onChange={(token) => {
+                setCaptchaToken(token || '');
+                setCaptchaError('');
+                if (errors.captcha) {
+                  setErrors(prev => ({ ...prev, captcha: '' }));
+                }
+              }}
+              onErrored={() => {
+                setCaptchaError('CAPTCHA verification failed');
+                setErrors(prev => ({ ...prev, captcha: 'CAPTCHA verification failed. Please try again.' }));
+              }}
+              onExpired={() => {
+                setCaptchaToken('');
+                setCaptchaError('CAPTCHA expired');
+                setErrors(prev => ({ ...prev, captcha: 'CAPTCHA expired. Please verify again.' }));
+              }}
+              className="flex justify-center"
+            />
+            {(errors.captcha || captchaError) && (
+              <p className="text-red-400 text-sm mt-2">{errors.captcha || captchaError}</p>
+            )}
           </div>
 
           {errors.submit && (
@@ -287,7 +362,7 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !captchaToken}
             className="w-full bg-aura-azure text-aura-black py-3 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Creating Account...' : '🚀 Create Account'}
