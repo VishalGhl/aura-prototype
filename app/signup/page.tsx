@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import ReCAPTCHA from 'react-google-recaptcha'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { hashPassword } from '../lib/auth-utils'
 import { createUser } from '../lib/db'
 import { sendWelcomeEmail } from '../utils/emailService'
@@ -20,7 +20,7 @@ export default function SignupPage() {
   const [countdown, setCountdown] = useState(60)
   const [captchaToken, setCaptchaToken] = useState<string>('')
   const [captchaError, setCaptchaError] = useState<string>('')
-  const recaptchaRef = useRef<ReCAPTCHA>(null)
+  const captchaRef = useRef<HCaptcha>(null)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -99,14 +99,14 @@ export default function SignupPage() {
       if (!isCaptchaValid) {
         setErrors({ captcha: 'Security verification failed. Please try again.' });
         setIsLoading(false);
-        recaptchaRef.current?.reset();
+        captchaRef.current?.resetCaptcha();
         setCaptchaToken('');
         return;
       }
     } catch (error) {
       setErrors({ captcha: 'CAPTCHA verification error. Please try again.' });
       setIsLoading(false);
-      recaptchaRef.current?.reset();
+      captchaRef.current?.resetCaptcha();
       setCaptchaToken('');
       return;
     }
@@ -150,7 +150,7 @@ export default function SignupPage() {
       console.error('Signup error:', error)
       setErrors({ submit: error.message || 'Failed to create account. Please try again.' })
       // Reset CAPTCHA on error
-      recaptchaRef.current?.reset();
+      captchaRef.current?.resetCaptcha();
       setCaptchaToken('');
     } finally {
       setIsLoading(false)
@@ -325,29 +325,28 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {/* CAPTCHA COMPONENT */}
+          {/* hCAPTCHA COMPONENT */}
           <div className="bg-aura-black border border-aura-azure/20 rounded-lg p-4 text-center">
             <div className="text-gray-400 mb-2">🔒 Security Verification</div>
-            <ReCAPTCHA
-              ref={recaptchaRef}
+            <HCaptcha
+              ref={captchaRef}
               sitekey={process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY!}
-              onChange={(token) => {
-                setCaptchaToken(token || '');
+              onVerify={(token) => {
+                setCaptchaToken(token);
                 setCaptchaError('');
                 if (errors.captcha) {
                   setErrors(prev => ({ ...prev, captcha: '' }));
                 }
               }}
-              onErrored={() => {
+              onError={() => {
                 setCaptchaError('CAPTCHA verification failed');
                 setErrors(prev => ({ ...prev, captcha: 'CAPTCHA verification failed. Please try again.' }));
               }}
-              onExpired={() => {
+              onExpire={() => {
                 setCaptchaToken('');
                 setCaptchaError('CAPTCHA expired');
                 setErrors(prev => ({ ...prev, captcha: 'CAPTCHA expired. Please verify again.' }));
               }}
-              className="flex justify-center"
             />
             {(errors.captcha || captchaError) && (
               <p className="text-red-400 text-sm mt-2">{errors.captcha || captchaError}</p>
