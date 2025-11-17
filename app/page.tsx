@@ -8,20 +8,20 @@ export default function LandingPage() {
             <div className="text-2xl">🔷</div>
             <div className="text-xl font-bold text-aura-azure">AURA</div>
           </div>
-          <div className="flex gap-3">
-            <a 
-              href="/login"
-              className="bg-aura-azure text-aura-black px-6 py-2 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all"
-            >
-              Sign In
-            </a>
-            <a 
-              href="/signup" 
-              className="border border-aura-azure text-aura-azure px-6 py-2 rounded-lg font-semibold hover:bg-aura-azure/10 transition-all"
-            >
-              Sign Up
-            </a>
-          </div>
+          <div className="flex items-center space-x-4">
+          <a 
+            href="/login"
+            className="bg-aura-azure text-aura-black px-6 py-2 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all"
+          >
+            Sign In
+          </a>
+          <a 
+            href="/signup" 
+            className="border border-aura-azure text-aura-azure px-6 py-2 rounded-lg font-semibold hover:bg-aura-azure/10 transition-all"
+          >
+            Sign Up
+          </a>
+        </div>
         </div>
       </nav>
 
@@ -35,19 +35,19 @@ export default function LandingPage() {
         </p>
         
         <div className="flex justify-center gap-6 mb-20">
-          <a 
-            href="/login"
-            className="bg-aura-azure text-aura-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-aura-azure/90 transition-all"
-          >
-            🚀 Start Building
-          </a>
-          <a 
-            href="/login"  // Temporary - will be /demo later
-            className="border border-aura-azure text-aura-azure px-8 py-4 rounded-xl font-bold text-lg hover:bg-aura-azure/10 transition-all"
-          >
-            📺 Live Demo
-          </a>
-        </div>
+        <a 
+          href="/signup"
+          className="bg-aura-azure text-aura-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-aura-azure/90 transition-all"
+        >
+          🚀 Start Building
+        </a>
+        <a 
+          href="/login"
+          className="border border-aura-azure text-aura-azure px-8 py-4 rounded-xl font-bold text-lg hover:bg-aura-azure/10 transition-all"
+        >
+          📺 Live Demo
+        </a>
+      </div>
 
         {/* Feature Grid */}
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">

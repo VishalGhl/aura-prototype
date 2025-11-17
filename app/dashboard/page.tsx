@@ -1,175 +1,144 @@
-import { getLinearIssues } from '@/lib/linear'
-import { getGitHubNotifications } from '@/lib/github'
-import IssueList from '@/components/IssueList'
-import NotificationList from '@/components/NotificationList'
+'use client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-const currentTime = new Date().toLocaleTimeString();
-
-interface DashboardProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+interface User {
+  firstName: string
+  email: string
 }
 
-export default async function DashboardPage(props: DashboardProps) {
-  const searchParams = await props.searchParams;
-  const linearConnected = searchParams.linear_connected === 'true';
-  
-  const [issues, notifications] = await Promise.all([
-    getLinearIssues(),
-    getGitHubNotifications('mock-token')
-  ]);
+export default function DashboardPage() {
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
-  const overnightActivity = {
-    newIssues: issues.filter(issue => {
-      const created = new Date(issue.createdAt);
-      const now = new Date();
-      return (now.getTime() - created.getTime()) < (12 * 60 * 60 * 1000);
-    }).length,
-    highPriority: issues.filter(issue => issue.priority === 'HIGH').length,
-    unreadNotifications: notifications.length
-  };
+  useEffect(() => {
+    // Check if user is authenticated
+    const userData = localStorage.getItem('aura_user')
+    if (!userData) {
+      router.push('/login')
+      return
+    }
+
+    try {
+      const userObj = JSON.parse(userData)
+      setUser(userObj)
+    } catch (error) {
+      console.error('Error parsing user data:', error)
+      router.push('/login')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [router])
+
+  const handleLogout = () => {
+    localStorage.removeItem('aura_user')
+    router.push('/')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-aura-black text-white flex items-center justify-center">
+        <div className="text-aura-azure text-xl">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-aura-black text-white">
-      {/* User Header */}
-      <div className="border-b border-aura-azure/20 py-4">
-        <div className="container mx-auto px-8 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 bg-aura-azure rounded-full flex items-center justify-center">
-              <span className="text-aura-black font-bold">U</span>
+      {/* Navigation */}
+      <nav className="border-b border-aura-azure/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-aura-azure">AURA</h1>
+              <span className="ml-4 text-gray-400">Dashboard</span>
             </div>
-            <div>
-              <div className="font-semibold">Welcome, User!</div>
-              <div className="text-gray-400 text-sm">Personal Dashboard</div>
-            </div>
-          </div>
-          <a 
-            href="/" 
-            className="text-gray-400 hover:text-aura-azure transition-all"
-          >
-            🏠 Home
-          </a>
-        </div>
-      </div>
-
-      <div className="container mx-auto p-8 max-w-6xl">
-        
-        {/* 🔷 AURA HEADER */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-aura-azure mb-4 tracking-tight">
-            🔷 A U R A
-          </h1>
-          <div className="h-1 w-24 bg-gradient-to-r from-aura-azure to-aura-purple mx-auto rounded-full"></div>
-        </div>
-
-        {/* 🌅 MORNING GREETING */}
-        <div className="glass p-8 rounded-3xl border border-aura-azure/20 mb-8 text-center">
-          <h2 className="text-3xl font-bold mb-2">
-            {linearConnected ? '🌅 GOOD MORNING, BUILDER!' : '🚀 WELCOME TO YOUR DASHBOARD'}
-          </h2>
-          <p className="text-gray-300 text-lg mb-4">
-            {linearConnected 
-              ? 'Ready to conquer your day? 💪' 
-              : 'Connect your tools to unlock your morning brief'
-            }
-          </p>
-          <div className="flex justify-center gap-4 mt-6">
-            <a 
-              href="/auth"
-              className="bg-aura-azure text-aura-black px-6 py-3 rounded-xl font-semibold hover:bg-aura-azure/90 transition-all shadow-lg shadow-aura-azure/20"
-            >
-              {linearConnected ? '🔗 Manage Connections' : '🔗 Connect Tools'}
-            </a>
-            {!linearConnected && (
-              <a 
-                href="/login" 
-                className="border border-aura-azure text-aura-azure px-6 py-3 rounded-xl font-semibold hover:bg-aura-azure/10 transition-all"
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-300">Welcome, {user.firstName}!</span>
+              <button
+                onClick={handleLogout}
+                className="bg-aura-azure text-aura-black px-4 py-2 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all"
               >
-                ⚙️ Account Settings
-              </a>
-            )}
+                Logout
+              </button>
+            </div>
           </div>
         </div>
+      </nav>
 
-        {/* 📊 OVERNIGHT ACTIVITY DASHBOARD */}
-        {linearConnected && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="glass p-4 rounded-2xl border border-aura-green/20 text-center">
-              <div className="text-2xl font-bold text-aura-green">{overnightActivity.newIssues}</div>
-              <div className="text-gray-400 text-sm">New Issues</div>
-            </div>
-            <div className="glass p-4 rounded-2xl border border-aura-amber/20 text-center">
-              <div className="text-2xl font-bold text-aura-amber">{overnightActivity.highPriority}</div>
-              <div className="text-gray-400 text-sm">High Priority</div>
-            </div>
-            <div className="glass p-4 rounded-2xl border border-aura-purple/20 text-center">
-              <div className="text-2xl font-bold text-aura-purple">{overnightActivity.unreadNotifications}</div>
-              <div className="text-gray-400 text-sm">Notifications</div>
-            </div>
-            <div className="glass p-4 rounded-2xl border border-aura-azure/20 text-center">
-              <div className="text-2xl font-bold text-aura-azure">
-                📅 {new Date().getDate()}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="glass p-8 rounded-2xl border border-aura-azure/20">
+          <h2 className="text-3xl font-bold text-aura-azure mb-4">
+            Welcome to Your Dashboard, {user.firstName}!
+          </h2>
+          <p className="text-gray-300 mb-6">
+            This is your personal workspace. Connect your tools and start being productive.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Linear Integration Card */}
+            <div className="bg-aura-black border border-aura-azure/20 rounded-xl p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-aura-azure/20 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-aura-azure">📊</span>
+                </div>
+                <h3 className="text-lg font-semibold text-white">Linear</h3>
               </div>
-              <div className="text-gray-400 text-sm">
-                {new Date().toLocaleDateString('en-US', { weekday: 'short' })}
+              <p className="text-gray-400 text-sm mb-4">
+                Connect your Linear account to manage issues and projects directly from AURA.
+              </p>
+              <button className="w-full bg-aura-azure text-aura-black py-2 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all">
+                Connect Linear
+              </button>
+            </div>
+
+            {/* Projects Card */}
+            <div className="bg-aura-black border border-aura-purple/20 rounded-xl p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-aura-purple/20 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-aura-purple">🚀</span>
+                </div>
+                <h3 className="text-lg font-semibold text-white">Projects</h3>
               </div>
+              <p className="text-gray-400 text-sm mb-4">
+                Create and manage your projects. Track progress and collaborate with your team.
+              </p>
+              <button className="w-full border border-aura-purple text-aura-purple py-2 rounded-lg font-semibold hover:bg-aura-purple/10 transition-all">
+                Create Project
+              </button>
+            </div>
+
+            {/* Analytics Card */}
+            <div className="bg-aura-black border border-aura-cyan/20 rounded-xl p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-aura-cyan/20 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-aura-cyan">📈</span>
+                </div>
+                <h3 className="text-lg font-semibold text-white">Analytics</h3>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                View your productivity metrics and track your performance over time.
+              </p>
+              <button className="w-full border border-aura-cyan text-aura-cyan py-2 rounded-lg font-semibold hover:bg-aura-cyan/10 transition-all">
+                View Analytics
+              </button>
             </div>
           </div>
-        )}
 
-        {/* 🎯 MAIN CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* 📋 LINEAR ISSUES */}
-          <div className="glass p-6 rounded-2xl border border-aura-azure/20">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-aura-azure">
-                📋 Your Linear Issues
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="text-aura-green text-sm font-medium">
-                  {linearConnected ? '• LIVE' : '• DEMO'}
-                </span>
-                <span className="bg-aura-azure/20 text-aura-azure px-2 py-1 rounded text-xs">
-                  {issues.length} items
-                </span>
-              </div>
+          {/* Recent Activity */}
+          <div className="bg-aura-black border border-aura-azure/20 rounded-xl p-6">
+            <h3 className="text-xl font-semibold text-aura-azure mb-4">Recent Activity</h3>
+            <div className="text-gray-400 text-center py-8">
+              <div className="text-4xl mb-4">📋</div>
+              <p>No recent activity yet</p>
+              <p className="text-sm mt-2">Start by connecting your tools or creating a project</p>
             </div>
-            <IssueList issues={issues} />
-          </div>
-
-          {/* 🔔 GITHUB NOTIFICATIONS */}
-          <div className="glass p-6 rounded-2xl border border-aura-purple/20">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-aura-purple">
-                🔔 GitHub Notifications
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400 text-sm font-medium">• DEMO</span>
-                <span className="bg-aura-purple/20 text-aura-purple px-2 py-1 rounded text-xs">
-                  {notifications.length} items
-                </span>
-              </div>
-            </div>
-            <NotificationList notifications={notifications} />
-          </div>
-        </div>
-
-        {/* 🚀 QUICK ACTIONS FOOTER */}
-        <div className="glass p-6 rounded-2xl border border-aura-green/20 mt-8">
-          <h3 className="text-lg font-bold text-aura-green mb-4">🚀 Quick Actions</h3>
-          <div className="flex flex-wrap gap-3">
-            <button className="bg-aura-azure/20 text-aura-azure px-4 py-2 rounded-lg font-medium hover:bg-aura-azure/30 transition-all">
-              Start Focus Mode
-            </button>
-            <button className="bg-aura-purple/20 text-aura-purple px-4 py-2 rounded-lg font-medium hover:bg-aura-purple/30 transition-all">
-              Plan My Day
-            </button>
-            <button className="bg-aura-green/20 text-aura-green px-4 py-2 rounded-lg font-medium hover:bg-aura-green/30 transition-all">
-              Check Deployments
-            </button>
-            <button className="bg-aura-amber/20 text-aura-amber px-4 py-2 rounded-lg font-medium hover:bg-aura-amber/30 transition-all">
-              Snooze All
-            </button>
           </div>
         </div>
       </div>

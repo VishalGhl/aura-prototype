@@ -1,35 +1,100 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+// Mock database - in real app, this would be your backend
+const mockUsers = new Map()
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const router = useRouter()
+
+  const validateLogin = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.email) {
+      newErrors.email = 'Email is required'
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!validateLogin()) {
+      return
+    }
+
     setIsLoading(true)
-    // TODO: Implement actual login
-    console.log('Login attempt:', { email, password })
-    setTimeout(() => {
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Check if user exists in our mock database
+      const user = mockUsers.get(formData.email)
+      
+      if (!user) {
+        setErrors({ submit: 'No account found with this email. Please create an account first.' })
+        return
+      }
+
+      if (user.password !== formData.password) {
+        setErrors({ submit: 'Invalid password. Please check your credentials.' })
+        return
+      }
+
+      // Store user session (in real app, use proper session management)
+      localStorage.setItem('aura_user', JSON.stringify({
+        firstName: user.firstName,
+        email: user.email
+      }))
+
+      // Redirect to dashboard
+      router.push('/dashboard')
+
+    } catch (error) {
+      console.error('Login error:', error)
+      setErrors({ submit: 'Login failed. Please try again.' })
+    } finally {
       setIsLoading(false)
-      // Temporary redirect - will implement real auth
-      window.location.href = '/dashboard'
-    }, 1000)
+    }
   }
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // TODO: Implement password reset
-    console.log('Password reset for:', email)
-    setTimeout(() => {
-      setIsLoading(false)
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000))
       alert('Password reset email sent! Check your inbox.')
       setShowForgotPassword(false)
-    }, 1000)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }))
+    }
+    if (errors.submit) {
+      setErrors(prev => ({ ...prev, submit: '' }))
+    }
   }
 
   if (showForgotPassword) {
@@ -46,8 +111,8 @@ export default function LoginPage() {
               </label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="name@company.com"
                 className="w-full bg-aura-black border border-aura-azure/20 rounded-lg p-3 text-white placeholder-gray-400 focus:border-aura-azure focus:outline-none"
                 required
@@ -96,12 +161,15 @@ export default function LoginPage() {
             </label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="name@company.com"
               className="w-full bg-aura-black border border-aura-azure/20 rounded-lg p-3 text-white placeholder-gray-400 focus:border-aura-azure focus:outline-none"
               required
             />
+            {errors.email && (
+              <p className="text-red-400 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -110,12 +178,15 @@ export default function LoginPage() {
             </label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
               placeholder="Enter your password"
               className="w-full bg-aura-black border border-aura-azure/20 rounded-lg p-3 text-white placeholder-gray-400 focus:border-aura-azure focus:outline-none"
               required
             />
+            {errors.password && (
+              <p className="text-red-400 text-xs mt-1">{errors.password}</p>
+            )}
           </div>
 
           <div className="flex justify-between items-center">
@@ -127,6 +198,12 @@ export default function LoginPage() {
               Forgot password?
             </button>
           </div>
+
+          {errors.submit && (
+            <div className="bg-red-400/20 border border-red-400 text-red-400 p-3 rounded-lg text-sm">
+              {errors.submit}
+            </div>
+          )}
 
           <button
             type="submit"
