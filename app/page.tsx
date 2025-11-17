@@ -8,12 +8,20 @@ export default function LandingPage() {
             <div className="text-2xl">🔷</div>
             <div className="text-xl font-bold text-aura-azure">AURA</div>
           </div>
-          <a 
-            href="/login"
-            className="bg-aura-azure text-aura-black px-6 py-2 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all"
-          >
-            Sign In
-          </a>
+          <div className="flex gap-3">
+            <a 
+              href="/login"
+              className="bg-aura-azure text-aura-black px-6 py-2 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all"
+            >
+              Sign In
+            </a>
+            <a 
+              href="/signup" 
+              className="border border-aura-azure text-aura-azure px-6 py-2 rounded-lg font-semibold hover:bg-aura-azure/10 transition-all"
+            >
+              Sign Up
+            </a>
+          </div>
         </div>
       </nav>
 
