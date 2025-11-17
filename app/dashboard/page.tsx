@@ -1,4 +1,3 @@
-import './globals.css'
 import { getLinearIssues } from '@/lib/linear'
 import { getGitHubNotifications } from '@/lib/github'
 import IssueList from '@/components/IssueList'
