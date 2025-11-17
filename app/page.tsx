@@ -6,11 +6,14 @@ import NotificationList from '@/components/NotificationList'
 
 const currentTime = new Date().toLocaleTimeString();
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+// FIX: Proper type for Next.js 15
+interface HomeProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function Home(props: HomeProps) {
+  // FIX: Await the searchParams Promise
+  const searchParams = await props.searchParams;
   const linearConnected = searchParams.linear_connected === 'true';
   
   const [issues, notifications] = await Promise.all([
