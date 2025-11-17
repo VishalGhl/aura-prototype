@@ -6,16 +6,23 @@ import NotificationList from '@/components/NotificationList'
 
 const currentTime = new Date().toLocaleTimeString();
 
-// FIX: Proper type for Next.js 15
 interface HomeProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default async function Home(props: HomeProps) {
-  // FIX: Await the searchParams Promise
   const searchParams = await props.searchParams;
   const linearConnected = searchParams.linear_connected === 'true';
   
+  // For now, we'll use a simple demo mode
+  // Later we'll add proper authentication
+  const isDemoMode = true; // Temporary - will be replaced with real auth
+
+  if (!isDemoMode) {
+    // If not authenticated, this would redirect to login
+    // For now, we'll keep the demo flow
+  }
+
   const [issues, notifications] = await Promise.all([
     getLinearIssues(),
     getGitHubNotifications('mock-token')
@@ -33,6 +40,24 @@ export default async function Home(props: HomeProps) {
 
   return (
     <div className="min-h-screen bg-aura-black text-white">
+      {/* User Header */}
+      <div className="border-b border-aura-azure/20 py-4">
+        <div className="container mx-auto px-8 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-8 bg-aura-azure rounded-full flex items-center justify-center">
+              <span className="text-aura-black font-bold">U</span>
+            </div>
+            <div>
+              <div className="font-semibold">Welcome, User!</div>
+              <div className="text-gray-400 text-sm">Personal Dashboard</div>
+            </div>
+          </div>
+          <button className="text-gray-400 hover:text-aura-azure transition-all">
+            ⚙️ Settings
+          </button>
+        </div>
+      </div>
+
       <div className="container mx-auto p-8 max-w-6xl">
         
         {/* 🔷 AURA HEADER */}
@@ -43,10 +68,11 @@ export default async function Home(props: HomeProps) {
           <div className="h-1 w-24 bg-gradient-to-r from-aura-azure to-aura-purple mx-auto rounded-full"></div>
         </div>
 
+        {/* Rest of your existing dashboard code remains the same */}
         {/* 🌅 MORNING GREETING */}
         <div className="glass p-8 rounded-3xl border border-aura-azure/20 mb-8 text-center">
           <h2 className="text-3xl font-bold mb-2">
-            {linearConnected ? '🌅 GOOD MORNING, BUILDER!' : '🚀 WELCOME TO AURA'}
+            {linearConnected ? '🌅 GOOD MORNING, BUILDER!' : '🚀 WELCOME TO YOUR DASHBOARD'}
           </h2>
           <p className="text-gray-300 text-lg mb-4">
             {linearConnected 
@@ -63,15 +89,16 @@ export default async function Home(props: HomeProps) {
             </a>
             {!linearConnected && (
               <a 
-                href="/" 
+                href="/login" 
                 className="border border-aura-azure text-aura-azure px-6 py-3 rounded-xl font-semibold hover:bg-aura-azure/10 transition-all"
               >
-                Try Demo Data
+                ⚙️ Account Settings
               </a>
             )}
           </div>
         </div>
 
+        {/* Continue with your existing dashboard code... */}
         {/* 📊 OVERNIGHT ACTIVITY DASHBOARD */}
         {linearConnected && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
