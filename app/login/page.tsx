@@ -119,13 +119,7 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* CAPTCHA PLACEHOLDER */}
-            <div className="bg-aura-black border border-aura-azure/20 rounded-lg p-4 text-center">
-              <div className="text-gray-400 mb-2">🔒 Security Verification</div>
-              <div className="bg-aura-azure/20 border border-aura-azure/30 rounded p-8 cursor-not-allowed">
-                <div className="text-aura-azure">Drag puzzle pieces to verify</div>
-              </div>
-            </div>
+            {/* REMOVED: CAPTCHA PLACEHOLDER */}
 
             <button
               type="submit"
