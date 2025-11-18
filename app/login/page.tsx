@@ -119,8 +119,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* REMOVED: CAPTCHA PLACEHOLDER */}
-
             <button
               type="submit"
               disabled={isLoading}
