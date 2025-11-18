@@ -13,7 +13,7 @@ export default function LandingPage() {
             href="/login"
             className="bg-aura-azure text-aura-black px-6 py-2 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all"
           >
-            Sign In
+            Log In
           </a>
           <a 
             href="/signup" 
