@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { storeLinearToken } from '@/lib/storage';
+import { storeLinearToken } from '@/app/lib/storage';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

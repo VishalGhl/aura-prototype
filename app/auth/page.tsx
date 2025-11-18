@@ -1,6 +1,6 @@
 // app/auth/page.tsx - Connect your tools
 'use client'
-import { getLinearAuthUrl } from '@/lib/auth';
+import { getLinearAuthUrl } from '@/app/lib/auth';
 
 export default function AuthPage() {
   const connectLinear = () => {

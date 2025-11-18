@@ -2,9 +2,6 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
-import { hashPassword } from '../lib/auth-utils'
-import { createUser } from '../lib/db'
-import { sendWelcomeEmail } from '../utils/emailService'
 import { verifyCaptcha } from '../utils/captcha'
 
 export default function SignupPage() {
@@ -21,6 +18,9 @@ export default function SignupPage() {
   const [captchaToken, setCaptchaToken] = useState<string>('')
   const [captchaError, setCaptchaError] = useState<string>('')
   const captchaRef = useRef<HCaptcha>(null)
+
+  // Debug log
+  console.log('hCaptcha Site Key:', process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -59,26 +59,6 @@ export default function SignupPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const generateUniquePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@$!%*?&'
-    const specialChars = '@$!%*?&'
-    
-    let password = ''
-    // Ensure at least one of each required character type
-    password += chars[Math.floor(Math.random() * 26)] // uppercase
-    password += chars[Math.floor(Math.random() * 26) + 26] // lowercase
-    password += chars[Math.floor(Math.random() * 10) + 52] // number
-    password += specialChars[Math.floor(Math.random() * specialChars.length)] // special
-    
-    // Fill the rest to make 8 characters
-    for (let i = password.length; i < 8; i++) {
-      password += chars[Math.floor(Math.random() * chars.length)]
-    }
-    
-    // Shuffle the password
-    return password.split('').sort(() => Math.random() - 0.5).join('')
-  }
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -92,46 +72,29 @@ export default function SignupPage() {
       return;
     }
 
-    // Verify CAPTCHA with server
     setIsLoading(true);
+
     try {
-      const isCaptchaValid = await verifyCaptcha(captchaToken);
-      if (!isCaptchaValid) {
-        setErrors({ captcha: 'Security verification failed. Please try again.' });
-        setIsLoading(false);
-        captchaRef.current?.resetCaptcha();
-        setCaptchaToken('');
-        return;
+      // Call the API route instead of direct database operations
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          captchaToken: captchaToken,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create account')
       }
-    } catch (error) {
-      setErrors({ captcha: 'CAPTCHA verification error. Please try again.' });
-      setIsLoading(false);
-      captchaRef.current?.resetCaptcha();
-      setCaptchaToken('');
-      return;
-    }
-
-    try {
-      // Generate unique password for the user
-      const userPassword = generateUniquePassword()
-      
-      // Hash password for storage
-      const hashedPassword = await hashPassword(userPassword)
-      
-      // Create user in database
-      const user = await createUser({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: hashedPassword,
-      });
-
-      // Send welcome email with actual password (not hashed)
-      await sendWelcomeEmail({
-        firstName: formData.firstName,
-        email: formData.email,
-        password: userPassword,
-      });
 
       // Show success modal
       setShowSuccess(true)
@@ -160,13 +123,9 @@ export default function SignupPage() {
   const handleResendEmail = async () => {
     setIsLoading(true)
     try {
-      // Resend welcome email
-      await sendWelcomeEmail({
-        firstName: formData.firstName,
-        email: formData.email,
-        password: 'your-password' // In real app, you'd retrieve this from the database
-      });
-      
+      // In a real app, you'd call an API to resend the email
+      console.log('Resending email to:', formData.email)
+      // For now, we'll just reset the timer
       setCountdown(60)
       
       // Restart countdown
@@ -199,7 +158,7 @@ export default function SignupPage() {
     }
   }
 
-  // Success Modal
+  // Success Modal (keep this the same as before)
   if (showSuccess) {
     return (
       <div className="min-h-screen bg-aura-black text-white flex items-center justify-center">
@@ -245,6 +204,7 @@ export default function SignupPage() {
     )
   }
 
+  // Rest of your component (keep everything else the same)
   return (
     <div className="min-h-screen bg-aura-black text-white flex items-center justify-center">
       <div className="glass p-8 rounded-2xl border border-aura-azure/20 max-w-md w-full">
@@ -252,6 +212,7 @@ export default function SignupPage() {
         <p className="text-gray-400 mb-6">Join AURA and transform your workflow</p>
         
         <form onSubmit={handleSignup} className="space-y-4">
+          {/* Keep all your form fields exactly as they were */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
