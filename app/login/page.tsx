@@ -119,8 +119,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* REMOVED: CAPTCHA PLACEHOLDER */}
-
             <button
               type="submit"
               disabled={isLoading}
@@ -146,7 +144,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-aura-black text-white flex items-center justify-center">
       <div className="glass p-8 rounded-2xl border border-aura-azure/20 max-w-md w-full">
         <h1 className="text-3xl font-bold text-aura-azure mb-2">Welcome Back</h1>
-        <p className="text-gray-400 mb-6">Sign in to your AURA dashboard</p>
+        <p className="text-gray-400 mb-6">Log in to your AURA dashboard</p>
         
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -204,7 +202,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full bg-aura-azure text-aura-black py-3 rounded-lg font-semibold hover:bg-aura-azure/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Signing In...' : '🔐 Sign In'}
+            {isLoading ? 'Logging In...' : '🔐 Log In'}
           </button>
 
           <div className="text-center text-gray-400 text-sm">
