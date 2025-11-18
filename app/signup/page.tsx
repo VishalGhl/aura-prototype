@@ -168,7 +168,7 @@ export default function SignupPage() {
           <div className="text-center text-gray-400 text-sm">
             Already have an account?{' '}
             <a href="/login" className="text-aura-azure hover:underline">
-              Sign in
+              Log in
             </a>
           </div>
         </form>
